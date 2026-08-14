@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -19,6 +19,9 @@ from .const import (
     POSTFINANCE_ATTRIBUTION,
     POSTFINANCE_DEVICE_KEY,
     POSTFINANCE_DEVICE_NAME,
+    SNB_ATTRIBUTION,
+    SNB_DEVICE_KEY,
+    SNB_DEVICE_NAME,
 )
 from .entity import HypozinsEntity
 
@@ -37,6 +40,7 @@ class HypozinsSensorEntityDescription(SensorEntityDescription):
     device_key: str
     device_name: str
     attribution: str
+    stand_key: str | None = None
 
 
 ENTITY_DESCRIPTIONS: tuple[HypozinsSensorEntityDescription, ...] = (
@@ -95,6 +99,18 @@ ENTITY_DESCRIPTIONS: tuple[HypozinsSensorEntityDescription, ...] = (
         device_name=BPK_DEVICE_NAME,
         attribution=BPK_ATTRIBUTION,
     ),
+    HypozinsSensorEntityDescription(
+        key="saron",
+        name="SARON Basiszinssatz",
+        icon="mdi:bank",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        device_key=SNB_DEVICE_KEY,
+        device_name=SNB_DEVICE_NAME,
+        attribution=SNB_ATTRIBUTION,
+        stand_key="saron_stand",
+    ),
 )
 
 
@@ -139,3 +155,13 @@ class HypozinsSensor(HypozinsEntity, SensorEntity):
     def native_value(self) -> float | None:
         """Return the native value of the sensor."""
         return self.coordinator.data.get(self.entity_description.key)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the date the value is as of, for sources with a reporting lag."""
+        if self.entity_description.stand_key is None:
+            return None
+        stand = self.coordinator.data.get(self.entity_description.stand_key)
+        if stand is None:
+            return None
+        return {"stand": stand}

@@ -5,16 +5,21 @@ from __future__ import annotations
 import asyncio
 import re
 import socket
+import xml.etree.ElementTree as ET
+from typing import Any
 
 import aiohttp
 from bs4 import BeautifulSoup
 
 POSTFINANCE_URL = "https://www.postfinance.ch/de/privat/finanzieren/hypotheken/zinssaetze-hypotheken.html"
 BPK_URL = "https://bpk.ch/hypotheken/aktuelle-zinssaetze"
+SNB_RSS_URL = "https://www.snb.ch/public/rss/de/interestRates"
 
 _WHITESPACE_RE = re.compile(r"\s+")
 _BPK_LAUFZEIT_RE = re.compile(r"^(\d+)\s*Jahre?\s*:\s*([\d.,]+)\s*%$")
 _SARON_MARGE_RE = re.compile(r"Marge von\s*([\d.,]+)\s*%")
+_CB_NS = {"cb": "http://www.cbwiki.net/wiki/index.php/Specification_1.2/"}
+_SARON_FIXING_RATE_NAME = "SARH"
 
 _EXPECTED_LAUFZEIT_VALUE_COUNT = 2
 
@@ -50,15 +55,17 @@ class HypozinsApiClient:
         """Initialize the API client."""
         self._session = session
 
-    async def async_get_data(self) -> dict[str, float]:
-        """Fetch and parse all mortgage rates."""
-        postfinance_html, bpk_html = await asyncio.gather(
+    async def async_get_data(self) -> dict[str, Any]:
+        """Fetch and parse all mortgage and reference rates."""
+        postfinance_html, bpk_html, snb_rss = await asyncio.gather(
             self._fetch(POSTFINANCE_URL),
             self._fetch(BPK_URL),
+            self._fetch(SNB_RSS_URL),
         )
-        data: dict[str, float] = {}
+        data: dict[str, Any] = {}
         data.update(self._parse_postfinance(postfinance_html))
         data.update(self._parse_bpk(bpk_html))
+        data.update(self._parse_saron(snb_rss))
         return data
 
     async def _fetch(self, url: str) -> str:
@@ -130,3 +137,27 @@ class HypozinsApiClient:
             raise HypozinsApiClientParsingError(msg)
 
         return result
+
+    def _parse_saron(self, rss_xml: str) -> dict[str, Any]:
+        """Parse the latest daily SARON fixing (close of trading) from the SNB RSS."""
+        try:
+            root = ET.fromstring(rss_xml)  # noqa: S314
+        except ET.ParseError as exception:
+            msg = f"SNB: RSS-Feed konnte nicht geparst werden - {exception}"
+            raise HypozinsApiClientParsingError(msg) from exception
+
+        for item in root.iter("item"):
+            rate_name = item.find(".//cb:rateName", _CB_NS)
+            if rate_name is None or rate_name.text != _SARON_FIXING_RATE_NAME:
+                continue
+            value = item.find(".//cb:observation/cb:value", _CB_NS)
+            period = item.find(".//cb:observationPeriod/cb:period", _CB_NS)
+            if value is None or period is None or not value.text or not period.text:
+                continue
+            return {
+                "saron": float(value.text.replace(",", ".")),
+                "saron_stand": period.text,
+            }
+
+        msg = f"SNB: SARON-Fixing ('{_SARON_FIXING_RATE_NAME}') nicht gefunden"
+        raise HypozinsApiClientParsingError(msg)

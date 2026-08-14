@@ -1,12 +1,13 @@
 # Hypozinsen
 
 Home Assistant Custom Integration, welche die aktuellen Festhypothek- und SARON-Zinssätze
-von [Postfinance](https://www.postfinance.ch/de/privat/finanzieren/hypotheken/zinssaetze-hypotheken.html)
-und [BPK](https://bpk.ch/hypotheken/aktuelle-zinssaetze) abruft.
+von [Postfinance](https://www.postfinance.ch/de/privat/finanzieren/hypotheken/zinssaetze-hypotheken.html),
+[BPK](https://bpk.ch/hypotheken/aktuelle-zinssaetze) und der
+[SNB](https://www.snb.ch/public/rss/de/interestRates) abruft.
 
 ## Sensoren
 
-Alle 12 Stunden aktualisiert, gruppiert in zwei Devices:
+Alle 12 Stunden aktualisiert, gruppiert in drei Devices:
 
 **Postfinance Hypotheken**
 - Festhypothek 2 Jahre
@@ -16,6 +17,10 @@ Alle 12 Stunden aktualisiert, gruppiert in zwei Devices:
 - Festhypothek 3 Jahre
 - Festhypothek 5 Jahre
 - SARON Hypothek Marge
+
+**SNB Referenzzinssätze**
+- SARON Basiszinssatz (tägliches Fixing, Handelsschluss; hat üblicherweise 1 Tag Verzögerung –
+  das Datum des zugrunde liegenden Fixings steht im Attribut `stand`)
 
 Da alle Sensoren als `state_class: measurement` markiert sind, speichert Home Assistant automatisch
 den Verlauf (History-Tab und Statistics-Karten in Lovelace) – es ist keine zusätzliche Konfiguration nötig.

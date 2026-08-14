@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -12,12 +12,12 @@ if TYPE_CHECKING:
     from .data import HypozinsConfigEntry
 
 
-class HypozinsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, float]]):
+class HypozinsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Class to manage fetching mortgage rate data."""
 
     config_entry: HypozinsConfigEntry
 
-    async def _async_update_data(self) -> dict[str, float]:
+    async def _async_update_data(self) -> dict[str, Any]:
         """Update data via library."""
         try:
             return await self.config_entry.runtime_data.client.async_get_data()
