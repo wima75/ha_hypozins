@@ -1,0 +1,12 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Verfolgt die Festhypothekenzinsen von Postfinance und BPK, alle 12 Stunden aktualisiert."
+            }
+        },
+        "abort": {
+            "already_configured": "Dieser Eintrag ist bereits konfiguriert."
+        }
+    }
+}

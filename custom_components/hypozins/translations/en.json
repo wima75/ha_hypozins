@@ -1,0 +1,12 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Track fixed-rate mortgage rates from Postfinance and BPK, updated every 12 hours."
+            }
+        },
+        "abort": {
+            "already_configured": "This entry is already configured."
+        }
+    }
+}
