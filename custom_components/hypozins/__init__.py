@@ -19,6 +19,8 @@ from .coordinator import HypozinsDataUpdateCoordinator
 from .data import HypozinsData
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
     from homeassistant.core import HomeAssistant
 
     from .data import HypozinsConfigEntry
@@ -45,12 +47,14 @@ async def async_setup_entry(
 
     await coordinator.async_config_entry_first_refresh()
 
+    async def _async_scheduled_refresh(_now: datetime) -> None:
+        """Refresh the coordinator data on the daily schedule."""
+        await coordinator.async_request_refresh()
+
     entry.async_on_unload(
         async_track_time_change(
             hass,
-            lambda _now: hass.async_create_task(
-                coordinator.async_request_refresh()
-            ),
+            _async_scheduled_refresh,
             hour=16,
             minute=30,
             second=0,
