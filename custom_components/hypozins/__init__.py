@@ -1,7 +1,7 @@
 """
 Custom integration to fetch Swiss mortgage interest rates.
 
-Tracks fixed-rate mortgage rates from Postfinance and BPK.
+Tracks mortgage rates from Postfinance, BPK and Swissquote.
 """
 
 from __future__ import annotations

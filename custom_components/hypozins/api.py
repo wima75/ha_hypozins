@@ -1,4 +1,4 @@
-"""API client to fetch Swiss mortgage interest rates from Postfinance and BPK."""
+"""API client to fetch Swiss mortgage interest rates."""
 
 from __future__ import annotations
 
@@ -14,14 +14,18 @@ from bs4 import BeautifulSoup
 POSTFINANCE_URL = "https://www.postfinance.ch/de/privat/finanzieren/hypotheken/zinssaetze-hypotheken.html"
 BPK_URL = "https://bpk.ch/hypotheken/aktuelle-zinssaetze"
 SNB_RSS_URL = "https://www.snb.ch/public/rss/de/interestRates"
+SWISSQUOTE_URL = "https://www.swissquote.com/de-ch/private/bank/products/mortgage"
 
 _WHITESPACE_RE = re.compile(r"\s+")
 _BPK_LAUFZEIT_RE = re.compile(r"^(\d+)\s*Jahre?\s*:\s*([\d.,]+)\s*%$")
 _SARON_MARGE_RE = re.compile(r"Marge von\s*([\d.,]+)\s*%")
 _CB_NS = {"cb": "http://www.cbwiki.net/wiki/index.php/Specification_1.2/"}
 _SARON_FIXING_RATE_NAME = "SARH"
+_SWISSQUOTE_LAUFZEIT_RE = re.compile(r"(\d+)\s*Jahre?")
 
 _EXPECTED_LAUFZEIT_VALUE_COUNT = 2
+_SWISSQUOTE_HEADERS = ["Laufzeit", "SARON-Zinssatz", "Fester Zinssatz"]
+_SWISSQUOTE_COLUMN_COUNT = 3
 
 
 class HypozinsApiClientError(Exception):
@@ -49,7 +53,7 @@ def _parse_rate(text: str) -> float:
 
 
 class HypozinsApiClient:
-    """Client to fetch mortgage interest rates from Postfinance and BPK."""
+    """Client to fetch mortgage interest rates from Postfinance, BPK and Swissquote."""
 
     def __init__(self, session: aiohttp.ClientSession) -> None:
         """Initialize the API client."""
@@ -57,15 +61,17 @@ class HypozinsApiClient:
 
     async def async_get_data(self) -> dict[str, Any]:
         """Fetch and parse all mortgage and reference rates."""
-        postfinance_html, bpk_html, snb_rss = await asyncio.gather(
+        postfinance_html, bpk_html, snb_rss, swissquote_html = await asyncio.gather(
             self._fetch(POSTFINANCE_URL),
             self._fetch(BPK_URL),
             self._fetch(SNB_RSS_URL),
+            self._fetch(SWISSQUOTE_URL),
         )
         data: dict[str, Any] = {}
         data.update(self._parse_postfinance(postfinance_html))
         data.update(self._parse_bpk(bpk_html))
         data.update(self._parse_saron(snb_rss))
+        data.update(self._parse_swissquote(swissquote_html))
         return data
 
     async def _fetch(self, url: str) -> str:
@@ -161,3 +167,44 @@ class HypozinsApiClient:
 
         msg = f"SNB: SARON-Fixing ('{_SARON_FIXING_RATE_NAME}') nicht gefunden"
         raise HypozinsApiClientParsingError(msg)
+
+    def _parse_swissquote(self, html: str) -> dict[str, Any]:
+        """Parse the 2-/5-year SARON and fixed mortgage rates from Swissquote."""
+        soup = BeautifulSoup(html, "lxml")
+        table = next(
+            (
+                t
+                for t in soup.find_all("table")
+                if [_normalize(th.get_text(strip=True)) for th in t.find_all("th")]
+                == _SWISSQUOTE_HEADERS
+            ),
+            None,
+        )
+        if table is None:
+            msg = "Swissquote: Zinssatz-Tabelle nicht gefunden"
+            raise HypozinsApiClientParsingError(msg)
+
+        rows: dict[str, tuple[str, str]] = {}
+        for row in table.find_all("tr"):
+            cells = [_normalize(td.get_text(strip=True)) for td in row.find_all("td")]
+            if len(cells) != _SWISSQUOTE_COLUMN_COUNT:
+                continue
+            match = _SWISSQUOTE_LAUFZEIT_RE.search(cells[0])
+            if match:
+                rows[match.group(1)] = (cells[1], cells[2])
+
+        result: dict[str, Any] = {}
+        for jahre in ("2", "5"):
+            if jahre not in rows:
+                msg = f"Swissquote: Laufzeit '{jahre} Jahre' nicht gefunden"
+                raise HypozinsApiClientParsingError(msg)
+            saron, fest = rows[jahre]
+            result[f"swissquote_saron_{jahre}j"] = _parse_rate(saron)
+            result[f"swissquote_fest_{jahre}j"] = _parse_rate(fest)
+
+        container = table.find_parent(lambda tag: tag.find("time") is not None)
+        time_tag = container.find("time") if container is not None else None
+        if time_tag is not None and time_tag.get("datetime"):
+            result["swissquote_stand"] = time_tag["datetime"]
+
+        return result

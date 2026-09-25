@@ -2,12 +2,13 @@
 
 Home Assistant Custom Integration, welche die aktuellen Festhypothek- und SARON-Zinssätze
 von [Postfinance](https://www.postfinance.ch/de/privat/finanzieren/hypotheken/zinssaetze-hypotheken.html),
-[BPK](https://bpk.ch/hypotheken/aktuelle-zinssaetze) und der
+[BPK](https://bpk.ch/hypotheken/aktuelle-zinssaetze),
+[Swissquote](https://www.swissquote.com/de-ch/private/bank/products/mortgage) und der
 [SNB](https://www.snb.ch/public/rss/de/interestRates) abruft.
 
 ## Sensoren
 
-Alle 12 Stunden aktualisiert, gruppiert in drei Devices:
+Alle 12 Stunden aktualisiert, gruppiert in vier Devices:
 
 **Postfinance Hypotheken**
 - Festhypothek 2 Jahre
@@ -17,6 +18,14 @@ Alle 12 Stunden aktualisiert, gruppiert in drei Devices:
 - Festhypothek 3 Jahre
 - Festhypothek 5 Jahre
 - SARON Hypothek Marge
+
+**Swissquote Hypotheken**
+- Festhypothek 2 Jahre
+- Festhypothek 5 Jahre
+- SARON Hypothek 2 Jahre (Gesamtzinssatz inkl. Marge)
+- SARON Hypothek 5 Jahre (Gesamtzinssatz inkl. Marge)
+
+(Das Datum, auf das sich die Swissquote-Zinssätze beziehen, steht im Attribut `stand`.)
 
 **SNB Referenzzinssätze**
 - SARON Basiszinssatz (tägliches Fixing, Handelsschluss; hat üblicherweise 1 Tag Verzögerung –

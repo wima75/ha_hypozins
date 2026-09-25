@@ -17,3 +17,7 @@ BPK_ATTRIBUTION = "Data provided by bpk.ch"
 SNB_DEVICE_KEY = "snb"
 SNB_DEVICE_NAME = "SNB Referenzzinssätze"
 SNB_ATTRIBUTION = "Data provided by snb.ch"
+
+SWISSQUOTE_DEVICE_KEY = "swissquote"
+SWISSQUOTE_DEVICE_NAME = "Swissquote Hypotheken"
+SWISSQUOTE_ATTRIBUTION = "Data provided by swissquote.com"
