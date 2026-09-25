@@ -53,7 +53,7 @@ def _parse_rate(text: str) -> float:
 
 
 class HypozinsApiClient:
-    """Client to fetch mortgage interest rates from Postfinance, BPK and Swissquote."""
+    """Client to fetch mortgage rates (Postfinance, BPK, Swissquote) and SARON (SNB)."""
 
     def __init__(self, session: aiohttp.ClientSession) -> None:
         """Initialize the API client."""

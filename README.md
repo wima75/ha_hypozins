@@ -8,7 +8,7 @@ von [Postfinance](https://www.postfinance.ch/de/privat/finanzieren/hypotheken/zi
 
 ## Sensoren
 
-Alle 12 Stunden aktualisiert, gruppiert in vier Devices:
+Beim Start von Home Assistant und danach täglich um 16:30 aktualisiert, gruppiert in vier Devices:
 
 **Postfinance Hypotheken**
 - Festhypothek 2 Jahre

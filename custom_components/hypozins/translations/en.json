@@ -2,7 +2,7 @@
     "config": {
         "step": {
             "user": {
-                "description": "Track fixed-rate mortgage rates from Postfinance and BPK, updated every 12 hours."
+                "description": "Track mortgage rates from Postfinance, BPK and Swissquote as well as the SNB SARON, updated daily at 16:30."
             }
         },
         "abort": {

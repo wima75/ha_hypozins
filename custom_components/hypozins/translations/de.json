@@ -2,7 +2,7 @@
     "config": {
         "step": {
             "user": {
-                "description": "Verfolgt die Festhypothekenzinsen von Postfinance und BPK, alle 12 Stunden aktualisiert."
+                "description": "Verfolgt die Hypothekarzinsen von Postfinance, BPK und Swissquote sowie den SARON der SNB, täglich um 16:30 aktualisiert."
             }
         },
         "abort": {
